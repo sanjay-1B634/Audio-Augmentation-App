@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Audio Augmentation Upload</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+    <div class="card">
+        <h2>Upload Your Audio</h2>
+        <form id="uploadForm" enctype="multipart/form-data">
+            <input type="file" name="file" accept=".mp3,.wav,.ogg" required><br>
+            <button type="submit" class="btn">Upload & Augment</button>
+        </form>
+
+        <!-- Loading Spinner -->
+        <div id="loader" class="loader" style="display: none;">
+            <div class="spinner"></div>
+            <p>Please wait... augmenting audio</p>
+        </div>
+
+        <!-- Response -->
+        <div id="response" class="response" style="display: none;"></div>
+    </div>
+
+    <script>
+        const form = document.getElementById('uploadForm');
+        const responseDiv = document.getElementById('response');
+        const loader = document.getElementById('loader');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            loader.style.display = 'flex';
+            responseDiv.style.display = 'none';
+
+            const formData = new FormData(form);
+
+            try {
+                const res = await fetch('/augment-audio', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await res.json();
+                loader.style.display = 'none';
+                responseDiv.style.display = 'block';
+
+                if (res.ok) {
+                    responseDiv.innerHTML = `
+                        <strong>${result.message}</strong><br>
+                        Output directory: ${result.output_dir}<br>
+                        <ul>${result.files.map(f => `<li>${f}</li>`).join('')}</ul>
+                    `;
+                } else {
+                    responseDiv.innerHTML = `<strong style="color: red;">Error:</strong> ${result.message}`;
+                }
+            } catch (err) {
+                loader.style.display = 'none';
+                responseDiv.style.display = 'block';
+                responseDiv.innerHTML = `<strong style="color: red;">Error:</strong> ${err.message}`;
+            }
+        });
+    </script>
+</body>
+</html>
